@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Summarizer & Translator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 1rem;
+        }
+
+        .text-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .language-select {
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .language-select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .process-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .process-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .process-btn:active {
+            transform: translateY(0);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .output-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .output-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 150px;
+            position: relative;
+        }
+
+        .output-box h3 {
+            color: #1e293b;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .output-content {
+            color: #475569;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100px;
+            color: #64748b;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #dc2626;
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .success {
+            color: #059669;
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header {
+                padding: 20px;
+            }
+        }
+
+        .char-counter {
+            font-size: 12px;
+            color: #6b7280;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .feature-list {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .feature-icon {
+            width: 16px;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Multilingual Text Summarizer</h1>
+            <p>Summarize and translate your text with the power of AI</p>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <span>Smart Summarization</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <span>Multi-language Translation</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"></div>
+                    <span>Lightning Fast</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="inputText">Enter your text to process:</label>
+                    <textarea 
+                        id="inputText" 
+                        class="text-input" 
+                        placeholder="Paste or type your text here... The AI will create a concise summary and translate it to your chosen language."
+                        maxlength="10000"
+                    ></textarea>
+                    <div class="char-counter">
+                        <span id="charCount">0</span> / 10,000 characters
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="targetLanguage">Choose target language:</label>
+                    <select id="targetLanguage" class="language-select">
+                        <option value="">Select a language...</option>
+                        <option value="Arabic">Arabic</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="Danish">Danish</option>
+                        <option value="Dutch">Dutch</option>
+                        <option value="English">English</option>
+                        <option value="French">French</option>
+                        <option value="German">German</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Japanese">Japanese</option>
+                        <option value="Korean">Korean</option>
+                        <option value="Norwegian">Norwegian</option>
+                        <option value="Portuguese">Portuguese</option>
+                        <option value="Russian">Russian</option>
+                        <option value="Spanish">Spanish</option>
+                        <option value="Swedish">Swedish</option>
+                    </select>
+                </div>
+
+                <button id="processBtn" class="process-btn">
+                    Summarize & Translate
+                </button>
+            </div>
+
+            <div class="output-section">
+                <div class="output-box" id="summaryBox">
+                    <h3>Summary</h3>
+                    <div class="output-content" id="summaryContent">
+                        Your summary will appear here once processing is complete...
+                    </div>
+                </div>
+
+                <div class="output-box" id="translationBox">
+                    <h3>Translation</h3>
+                    <div class="output-content" id="translationContent">
+                        Your translated summary will appear here...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const targetLanguage = document.getElementById('targetLanguage');
+        const processBtn = document.getElementById('processBtn');
+        const summaryContent = document.getElementById('summaryContent');
+        const translationContent = document.getElementById('translationContent');
+        const summaryBox = document.getElementById('summaryBox');
+        const translationBox = document.getElementById('translationBox');
+        const charCount = document.getElementById('charCount');
+
+        inputText.addEventListener('input', function() {
+            const count = this.value.length;
+            charCount.textContent = count;
+            
+            if (count > 8000) {
+                charCount.style.color = '#dc2626';
+            } else if (count > 5000) {
+                charCount.style.color = '#f59e0b';
+            } else {
+                charCount.style.color = '#6b7280';
+            }
+        });
+
+        processBtn.addEventListener('click', async function() {
+            const text = inputText.value.trim();
+            const language = targetLanguage.value;
+
+            if (!text) {
+                showError(summaryBox, 'Please enter some text to process.');
+                return;
+            }
+
+            if (!language) {
+                showError(translationBox, 'Please select a target language.');
+                return;
+            }
+
+            if (text.length < 50) {
+                showError(summaryBox, 'Please enter at least 50 characters for meaningful summarization.');
+                return;
+            }
+
+            processBtn.disabled = true;
+            processBtn.textContent = 'Processing...';
+            
+            showLoading(summaryContent);
+            showLoading(translationContent);
+            
+            resetBoxStyles();
+
+            try {
+                const result = await callProcessAPI(text, language);
+                
+                if (result.summary) {
+                    showResult(summaryContent, result.summary);
+                    showSuccess(summaryBox);
+                    
+                    if (result.translation) {
+                        showResult(translationContent, result.translation);
+                        showSuccess(translationBox);
+                    } else {
+                        showError(translationBox, result.error || 'Failed to translate the summary. Please try again.');
+                    }
+                } else {
+                    showError(summaryBox, 'Failed to summarize the text. Please try again.');
+                    translationContent.textContent = 'Translation unavailable due to summarization error.';
+                }
+            } catch (error) {
+                showError(summaryBox, error.message || 'An error occurred during processing. Please try again.');
+                showError(translationBox, 'Translation unavailable due to processing error.');
+            } finally {
+                processBtn.disabled = false;
+                processBtn.textContent = 'Summarize & Translate';
+            }
+        });
+
+        function showLoading(element) {
+            element.innerHTML = '<div class="loading"><div class="spinner"></div>Processing...</div>';
+        }
+
+        function showResult(element, text) {
+            element.textContent = text;
+        }
+
+        function showError(box, message) {
+            box.classList.add('error');
+            const content = box.querySelector('.output-content');
+            content.textContent = message;
+        }
+
+        function showSuccess(box) {
+            box.classList.add('success');
+        }
+
+        function resetBoxStyles() {
+            summaryBox.classList.remove('error', 'success');
+            translationBox.classList.remove('error', 'success');
+        }
+
+        async function callSummarizeAPI(text) {
+            const response = await fetch('/api/summarize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Summarization failed');
+            }
+            return data.summary;
+        }
+
+        async function callTranslateAPI(text, targetLanguage) {
+            const response = await fetch('/api/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    text: text, 
+                    target_language: targetLanguage 
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Translation failed');
+            }
+            return data.translation;
+        }
+
+        async function callProcessAPI(text, targetLanguage) {
+            const response = await fetch('/api/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    text: text, 
+                    target_language: targetLanguage 
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Processing failed');
+            }
+            return data;
+        }
+
+        inputText.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(200, this.scrollHeight) + 'px';
+        });
+    </script>
+</body>
+</html>
